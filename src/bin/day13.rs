@@ -5,8 +5,7 @@ const DAY: u8 = 13;
 const NEW_LINE_CHAR: &str = "\r\n";
 
 fn main() {
-    let input = read_input(DAY, InputType::Other("KB")).unwrap();
-    let parsed = parse(&input);
+    let input = read_input(DAY, InputType::Real).unwrap();
 
     println!("Part1: {}", part1(&input));
     println!("Part2: {}", part2(&input));
