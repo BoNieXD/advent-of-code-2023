@@ -1,3 +1,8 @@
+use std::{
+    cmp::Ordering,
+    collections::{BinaryHeap, HashSet},
+};
+
 use aoc2023::{read_input, InputType};
 use timed::timed;
 
@@ -15,7 +20,7 @@ fn parse(input: &str) -> Vec<Vec<u32>> {
         .map(|line| line.chars().map(|x| x.to_digit(10).unwrap()).collect())
         .collect()
 }
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 enum Direction {
     Up,
     Right,
@@ -59,48 +64,80 @@ impl Direction {
     }
 }
 
-fn add_next(
-    map: &Vec<Vec<u32>>,
-    queue: &mut Vec<((usize, usize), Direction, u8, u32)>,
-    visited: &mut Vec<((usize, usize), Direction, u8)>,
-    prev: ((usize, usize), Direction, u8, u32),
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+struct Node {
+    position: (usize, usize),
     direction: Direction,
-) {
-    let ((x, y), prev_direction, subsequential, distance) = prev;
-    let subsequential = if prev_direction == direction {
-        subsequential + 1
-    } else {
-        1
-    };
-    if let Some(next) = direction.apply_dir((x, y), map[0].len() - 1, map.len() - 1) {
-        if !visited.contains(&(next, direction, subsequential)) {
-            visited.push((next, direction, subsequential));
-            queue.push((
-                next,
-                direction,
-                subsequential,
-                distance + map[next.1][next.0],
-            ));
+    subsequential: u8,
+}
+impl Node {
+    fn new(position: (usize, usize), direction: Direction, subsequential: u8) -> Node {
+        Node {
+            position,
+            direction,
+            subsequential,
         }
     }
 }
-#[allow(unreachable_code)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+struct DistNode {
+    node: Node,
+    distance: u32,
+}
+impl DistNode {
+    fn new(node: Node, distance: u32) -> DistNode {
+        DistNode { node, distance }
+    }
+}
+impl Ord for DistNode {
+    fn cmp(&self, other: &Self) -> Ordering {
+        other.distance.cmp(&self.distance)
+    }
+}
+impl PartialOrd for DistNode {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+fn add_next(
+    map: &Vec<Vec<u32>>,
+    queue: &mut BinaryHeap<DistNode>,
+    visited: &mut HashSet<Node>,
+    prev: DistNode,
+    direction: Direction,
+) {
+    let subsequential = if prev.node.direction == direction {
+        prev.node.subsequential + 1
+    } else {
+        1
+    };
+    if let Some(next) = direction.apply_dir(prev.node.position, map[0].len() - 1, map.len() - 1) {
+        let node = Node::new(next, direction, subsequential);
+        if !visited.contains(&node) {
+            visited.insert(node);
+            queue.push(DistNode::new(node, prev.distance + map[next.1][next.0]));
+        }
+    }
+}
 #[timed]
 fn part1(input: &str) -> u32 {
     let map = parse(input);
     let max_x = map[0].len() - 1;
     let max_y = map.len() - 1;
-    let mut queue = vec![];
-    let mut visited = vec![];
-    queue.push(((0, 0), Direction::Right, 1, 0));
-    queue.push(((0, 0), Direction::Down, 1, 0));
+    let mut queue = BinaryHeap::new();
+    let mut visited = HashSet::new();
+    queue.push(DistNode::new(Node::new((0, 0), Direction::Right, 0), 0));
+    queue.push(DistNode::new(Node::new((0, 0), Direction::Down, 0), 0));
+    let mut result = 0;
     while !queue.is_empty() {
         let prev = queue.pop().unwrap();
-        let ((x, y), direction, subsequential, distance) = prev;
-        if x == max_x && y == max_y {
-            return distance;
+        if prev.node.position == (max_x, max_y) {
+            result = prev.distance;
+            break;
         }
-        let need_turn = subsequential == 3;
+        let need_turn = prev.node.subsequential == 3;
+        let direction = prev.node.direction;
         if !(need_turn && direction == Direction::Up) && direction != Direction::Down {
             add_next(&map, &mut queue, &mut visited, prev, Direction::Up);
         }
@@ -113,44 +150,41 @@ fn part1(input: &str) -> u32 {
         if !(need_turn && direction == Direction::Left) && direction != Direction::Right {
             add_next(&map, &mut queue, &mut visited, prev, Direction::Left);
         }
-
-        queue.sort_by(|(_, _, _, a), (_, _, _, b)| b.cmp(&a));
     }
-    unreachable!();
+    result
 }
-#[allow(unreachable_code)]
+
 #[timed]
 fn part2(input: &str) -> u32 {
     let map = parse(input);
     let max_x = map[0].len() - 1;
     let max_y = map.len() - 1;
-    let mut queue = vec![];
-    let mut visited = vec![];
-    queue.push(((0, 0), Direction::Right, 0, 0));
-    queue.push(((0, 0), Direction::Down, 0, 0));
+    let mut queue = BinaryHeap::new();
+    let mut visited = HashSet::new();
+    queue.push(DistNode::new(Node::new((0, 0), Direction::Right, 0), 0));
+    queue.push(DistNode::new(Node::new((0, 0), Direction::Down, 0), 0));
+    let mut result = 0;
     while !queue.is_empty() {
         let prev = queue.pop().unwrap();
-        let ((x, y), direction, subsequential, distance) = prev;
-        if x == max_x && y == max_y && subsequential >= 4 {
-            return distance;
+        if prev.node.position == (max_x, max_y) && prev.node.subsequential >= 4 {
+            result = prev.distance;
+            break;
         }
-        if subsequential < 10 {
-            add_next(&map, &mut queue, &mut visited, prev, direction);
+        if prev.node.subsequential < 10 {
+            add_next(&map, &mut queue, &mut visited, prev, prev.node.direction);
         }
-        if subsequential >= 4 {
-            if direction != Direction::Down && direction != Direction::Up {
+        if prev.node.subsequential >= 4 {
+            if !matches!(prev.node.direction, Direction::Down | Direction::Up) {
                 add_next(&map, &mut queue, &mut visited, prev, Direction::Up);
                 add_next(&map, &mut queue, &mut visited, prev, Direction::Down);
             }
-            if direction != Direction::Left && direction != Direction::Right {
+            if !matches!(prev.node.direction, Direction::Left | Direction::Right) {
                 add_next(&map, &mut queue, &mut visited, prev, Direction::Right);
                 add_next(&map, &mut queue, &mut visited, prev, Direction::Left);
             }
         }
-
-        queue.sort_by(|(_, _, _, a), (_, _, _, b)| b.cmp(&a));
     }
-    unreachable!();
+    result
 }
 
 #[cfg(test)]
@@ -165,6 +199,13 @@ mod tests {
     fn part1_test() {
         let expected = 102;
         let result = part1(&get_test_input(InputType::Test));
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn part1_test_kk() {
+        let expected = 902;
+        let result = part1(&get_test_input(InputType::Other("KK")));
         assert_eq!(result, expected);
     }
 
