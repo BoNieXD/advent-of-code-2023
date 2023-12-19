@@ -4,7 +4,7 @@ use aoc2023::{read_input, InputType};
 use timed::timed;
 
 const DAY: u8 = 8;
-const NEW_LINE_CHAR: &str = "\r\n";
+const NEWLINE_CHAR: &str = "\r\n";
 
 fn main() {
     let input = read_input(DAY, InputType::Real).unwrap();
@@ -15,7 +15,7 @@ fn main() {
 }
 
 fn parse_data(input: &str) -> (Vec<char>, HashMap<&str, (&str, &str)>) {
-    let split_by = NEW_LINE_CHAR.repeat(2);
+    let split_by = NEWLINE_CHAR.repeat(2);
     let mut lines = input.split(&split_by);
     let lr_directions = lines.next().unwrap().chars().collect::<Vec<_>>();
     let node_map = lines

@@ -4,7 +4,7 @@ use aoc2023::{read_input, InputType};
 use timed::timed;
 
 const DAY: u8 = 19;
-const NEW_LINE_CHAR: &str = "\n";
+const NEWLINE_CHAR: &str = "\n";
 fn main() {
     let input = read_input(DAY, InputType::Real).unwrap();
 
@@ -18,7 +18,7 @@ fn parse(
     HashMap<&str, Vec<((char, char, usize), &str)>>,
     Vec<HashMap<char, usize>>,
 ) {
-    let split_by = NEW_LINE_CHAR.repeat(2);
+    let split_by = NEWLINE_CHAR.repeat(2);
     let (workflow, categories) = input.split_once(&split_by).unwrap();
     let workflow = workflow
         .lines()

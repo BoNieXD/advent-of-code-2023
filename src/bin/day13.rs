@@ -2,7 +2,7 @@ use aoc2023::{read_input, InputType};
 use timed::timed;
 
 const DAY: u8 = 13;
-const NEW_LINE_CHAR: &str = "\r\n";
+const NEWLINE_CHAR: &str = "\r\n";
 
 fn main() {
     let input = read_input(DAY, InputType::Real).unwrap();
@@ -12,7 +12,7 @@ fn main() {
 }
 
 fn parse(input: &str) -> Vec<Vec<Vec<char>>> {
-    let split_by = NEW_LINE_CHAR.repeat(2);
+    let split_by = NEWLINE_CHAR.repeat(2);
     input
         .split(&split_by)
         .map(|map| {

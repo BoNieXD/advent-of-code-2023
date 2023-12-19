@@ -3,7 +3,7 @@ use rayon::prelude::*;
 use timed::timed;
 
 const DAY: u8 = 5;
-const NEW_LINE_CHAR: &str = "\r\n";
+const NEWLINE_CHAR: &str = "\r\n";
 
 fn main() {
     let input = read_input(DAY, InputType::Real).unwrap();
@@ -39,7 +39,7 @@ impl Map {
 }
 
 fn parse_data(input: &str) -> (Vec<i64>, Vec<Map>) {
-    let split_by = NEW_LINE_CHAR.repeat(2);
+    let split_by = NEWLINE_CHAR.repeat(2);
     let seeds_maps = input.split(&split_by).collect::<Vec<_>>();
     let seeds = seeds_maps[0]
         .split(' ')
